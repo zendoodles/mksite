@@ -17,7 +17,7 @@ set_error_handler('ars_error_handler', E_ALL | E_STRICT & ~E_DEPRECATED);
  */
 function ars_error_handler( $errno/*int*/  ,  $errstr /*string*/ , $errfile /*string*/,  $errline /*int*/,   $errcontext/*array*/  ) {
   print "Error: $errno: $errstr. Check debug.log.";
-ars_dd($errcontext, "Error $errno: $errstr in $errfile on line $errline");
+  ars_dd($errcontext, "Error $errno: $errstr in $errfile on line $errline");
   return FALSE;
 }  // end ars_error_handler
 
@@ -31,7 +31,7 @@ function ars_dd($data, $label = NULL) {
   
   print_r($data);
   $string = ob_get_clean();
-  $out = date('j F Y h:i:s A ');
+  $out = date('h:i:s A j F Y ');
   if ($label) {
     $out .= $label .': '. $string;
   }
@@ -40,7 +40,7 @@ function ars_dd($data, $label = NULL) {
   }
   $out .= "\n";
   
-  $file = '/Users/arenesoper/Projects/debug/debug.log';
+  $file = '/Users/andrea/Sites/debug/logs/debug.log';
   $handle = fopen($file, "a");
   if (fwrite($handle, $out) === FALSE) {
     print('The debug file could not be written!');
