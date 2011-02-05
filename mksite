@@ -1,0 +1,49 @@
+#!/bin/bash
+# Set everything up for use with the magic vhost goodness. #
+
+# Variables...
+VDOC_ROOT=/Users/andrea/Sites/VHosts
+E_WRONGARGS=85
+E_NOTROOT=87
+HOSTS_FILE=/etc/hosts
+USAGE="Usage: mksite [Site Name]... [Path to DocRoot]..."
+
+# Must be run as root to add things to /etc/hosts.
+if [ "$UID" -ne 0 ]
+then
+  echo "You must be root to work the magic."
+  exit $E_NOTROOT
+fi
+
+# Get the arguments.
+if [ -n "$1" ]
+then
+  SITE_NAME=$1
+  if [ $# -eq 2 ]
+  then
+    SITE_PATH=$2
+  else
+    echo -e "Where will your site code reside? (path) \n $USAGE"
+    exit $E_WRONGARGS
+  fi
+else
+  echo -e "Your site needs a name! \n $USAGE"
+  exit $E_WRONGARGS
+fi
+
+# Add the entry to /etc/hosts so apache answers
+echo -e "127.0.0.1\t$SITE_NAME.local" >> $HOSTS_FILE
+echo -e "Added $SITE_NAME.local to hosts."
+
+# create a symbolic link in Sites/VHosts
+ln -s $PWD/$SITE_PATH $VDOC_ROOT/$SITE_NAME
+if [ "$?" -eq "0" ]
+  then
+    echo  -e "Created $SITE_NAME symbolic link to $PWD/$SITE_PATH in VHosts.\n"
+    echo "Your VirtualHost site should be available at $SITE_NAME.local now."
+  else
+    echo "Problem creating symbolic link."
+fi
+
+
+exit 0
