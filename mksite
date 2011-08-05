@@ -7,6 +7,10 @@ E_WRONGARGS=85
 E_NOTROOT=87
 HOSTS_FILE=/etc/hosts
 USAGE="Usage: mksite [Site Name]... [Path to DocRoot]..."
+EXTENSION=localhost
+NEW_OWNER=andrea:staff
+
+# @todo add a verbose/terse flag
 
 # Must be run as root to add things to /etc/hosts.
 if [ "$UID" -ne 0 ]
@@ -31,19 +35,49 @@ else
   exit $E_WRONGARGS
 fi
 
+SITE_PATH=`echo "${SITE_PATH}" | sed -e "s/\/*$//" `
+SITE_PATH=$PWD/$SITE_PATH
 # Add the entry to /etc/hosts so apache answers
-echo -e "127.0.0.1\t$SITE_NAME.local" >> $HOSTS_FILE
-echo -e "Added $SITE_NAME.local to hosts."
+echo -e "127.0.0.1\t$SITE_NAME.$EXTENSION" >> $HOSTS_FILE
+echo -e "Added $SITE_NAME.$EXTENSION to hosts."
 
 # create a symbolic link in Sites/VHosts
-ln -s $PWD/$SITE_PATH $VDOC_ROOT/$SITE_NAME
+ln -s $SITE_PATH $VDOC_ROOT/$SITE_NAME
+
 if [ "$?" -eq "0" ]
   then
     echo  -e "Created $SITE_NAME symbolic link to $PWD/$SITE_PATH in VHosts.\n"
-    echo "Your VirtualHost site should be available at $SITE_NAME.local now."
   else
     echo "Problem creating symbolic link."
 fi
 
+# create multisite dir
+MULTISITE_DIR="$SITE_PATH/sites/$SITE_NAME.$EXTENSION"
+mkdir $MULTISITE_DIR
+echo -e "Creating $MULTISITE_DIR and setting ownership to $NEW_OWNER\n"
+chown $NEW_OWNER $MULTISITE_DIR
+
+# create and chmod files dir
+mkdir $MULTISITE_DIR/files
+echo -e "Creating files directory and setting permissions: $MULTISITE_DIR/files\n"
+chmod a+w $MULTISITE_DIR/files
+chown $NEW_OWNER $MULTISITE_DIR/files
+
+# copy and chmod settings.php
+cp $SITE_PATH/sites/default/default.settings.php $MULTISITE_DIR/settings.php
+echo -e "Copying default.settings.php to $MULTISITE_DIR/settings.php and setting file permissions.\n"
+chmod a+w $MULTISITE_DIR/settings.php
+chown $NEW_OWNER $MULTISITE_DIR/settings.php
+
+# Configure moodle
+CONFIG_FILE="$MULTISITE_DIR/moodle.config.php"
+cp $SITE_PATH/sites/default/default-moodle.config.php $CONFIG_FILE
+echo "Configuring Moodle.\n"
+echo -e "\$CFG->wwwroot = 'http://$SITE_NAME.$EXTENSION/moodle';\n" >> $CONFIG_FILE
+echo -e "\$CFG->dirroot = '$SITE_PATH/moodle';\n" >> $CONFIG_FILE
+echo -e "\$CFG->dataroot = '$MULTISITE_DIR/files';\n" >> $CONFIG_FILE
+echo -e "\$CFG->dbname = 'dlc_$SITE_NAME';" >> $CONFIG_FILE
+echo -e "?>\n"
+echo "Your VirtualHost site should be available at $SITE_NAME.$EXTENSION now."
 
 exit 0
