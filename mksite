@@ -69,15 +69,4 @@ echo -e "Copying default.settings.php to $MULTISITE_DIR/settings.php and setting
 chmod a+w $MULTISITE_DIR/settings.php
 chown $NEW_OWNER $MULTISITE_DIR/settings.php
 
-# Configure moodle
-CONFIG_FILE="$MULTISITE_DIR/moodle.config.php"
-cp $SITE_PATH/sites/default/default-moodle.config.php $CONFIG_FILE
-echo "Configuring Moodle.\n"
-echo -e "\$CFG->wwwroot = 'http://$SITE_NAME.$EXTENSION/moodle';\n" >> $CONFIG_FILE
-echo -e "\$CFG->dirroot = '$SITE_PATH/moodle';\n" >> $CONFIG_FILE
-echo -e "\$CFG->dataroot = '$MULTISITE_DIR/files';\n" >> $CONFIG_FILE
-echo -e "\$CFG->dbname = 'dlc_$SITE_NAME';" >> $CONFIG_FILE
-echo -e "?>\n"
-echo "Your VirtualHost site should be available at $SITE_NAME.$EXTENSION now."
-
 exit 0
