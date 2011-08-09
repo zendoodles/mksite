@@ -1,0 +1,22 @@
+I use this script to create drupal multisite directories when I want to add a new site to a drupal install. 
+
+Usage (as root): mksite [Site Name]... [Path to DrupalDocRoot]...
+
+Currently it:
+1) Adds the site to /etc/hosts
+2) Creates a symbolic link in /Path/to/DocRoot/VHosts to the specified drupal root
+3) Creates a directory in <drupal_root>/sites with sitename.localhost
+4) Creates a directory <drupal_root>/sites/<sitename>.localhost/files 
+5) and chmods files a+w
+6) Copies sites/default/default.settings.php to sites/<sitename>.localhost/settings.php
+7) and chmods settings.php a+w
+
+@todo Use sudo better in the script instead of requiring the user to be root.
+@todo Extract configuration bits into a ~/.mksite config file. 
+@todo Consider not 777 for files
+
+Possible Future Options
+`*´'`°¤¸¸.•'•.¸¸¤°´'`*´
+
+* Create a db with the sitename (user with same name? Ask for password?)
+
