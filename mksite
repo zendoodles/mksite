@@ -1,14 +1,18 @@
 #!/bin/bash
-# Set everything up for use with the magic vhost goodness. #
+# Set everything up for use with the magic vhost goodness.
+
+if [ -a ~/.mksite ]
+then 
+  . ~/.mksite
+else
+  echo ${0}".conf Configuration for mksite command" #> ~/.mksite
+fi
 
 # Variables...
-VDOC_ROOT=/Users/andrea/Sites/VHosts
 E_WRONGARGS=85
 E_NOTROOT=87
-HOSTS_FILE=/etc/hosts
 USAGE="Usage: mksite [Site Name]... [Path to DocRoot]..."
 EXTENSION=localhost
-NEW_OWNER=andrea:staff
 
 # @todo add a verbose/terse flag
 
@@ -16,31 +20,43 @@ NEW_OWNER=andrea:staff
 if [ "$UID" -ne 0 ]
 then
   echo "You must be root to work the magic."
-  exit $E_NOTROOT
+  sudo -p "Please enter you admin password: " whoami 1>/dev/null
 fi
+if [ "$(sudo whoami)" != 'root' ]; then
+  echo "You're not root! Cannot create site."
+  exit $E_NOTROOT
+else
+  echo "Thank you. Proceding to create site."
+fi
+
 
 # Get the arguments.
 if [ -n "$1" ]
 then
   SITE_NAME=$1
-  if [ $# -eq 2 ]
-  then
-    SITE_PATH=$2
-  else
-    echo -e "Where will your site code reside? (path) \n $USAGE"
-    exit $E_WRONGARGS
-  fi
 else
   echo -e "Your site needs a name! \n $USAGE"
   exit $E_WRONGARGS
 fi
 
+# Check for path.
+if [ $# -eq 2 ]
+  then
+    SITE_PATH=$PWD/$2
+  else
+    #check for a drupal dir
+    grep drupal Sites/drupal/drupal-6/CHANGELOG.txt >/dev/null
+    if [ $? -eq 0 ] then echo "It's a drupal site"; fi
+    # Assume .
+    SITE_PATH=$PWD
+  fi
+
 SITE_PATH=`echo "${SITE_PATH}" | sed -e "s/\/*$//" `
-SITE_PATH=$PWD/$SITE_PATH
 # Add the entry to /etc/hosts so apache answers
-echo -e "127.0.0.1\t$SITE_NAME.$EXTENSION" >> $HOSTS_FILE
+sudo echo -e "127.0.0.1\t$SITE_NAME.$EXTENSION" >> $HOSTS_FILE
 echo -e "Added $SITE_NAME.$EXTENSION to hosts."
 
+sudo -k
 # create a symbolic link in Sites/VHosts
 ln -s $SITE_PATH $VDOC_ROOT/$SITE_NAME
 
@@ -54,19 +70,16 @@ fi
 # create multisite dir
 MULTISITE_DIR="$SITE_PATH/sites/$SITE_NAME.$EXTENSION"
 mkdir $MULTISITE_DIR
-echo -e "Creating $MULTISITE_DIR and setting ownership to $NEW_OWNER\n"
-chown $NEW_OWNER $MULTISITE_DIR
+echo -e "Creating $MULTISITE_DIR\n"
 
 # create and chmod files dir
 mkdir $MULTISITE_DIR/files
 echo -e "Creating files directory and setting permissions: $MULTISITE_DIR/files\n"
 chmod a+w $MULTISITE_DIR/files
-chown $NEW_OWNER $MULTISITE_DIR/files
 
 # copy and chmod settings.php
 cp $SITE_PATH/sites/default/default.settings.php $MULTISITE_DIR/settings.php
 echo -e "Copying default.settings.php to $MULTISITE_DIR/settings.php and setting file permissions.\n"
 chmod a+w $MULTISITE_DIR/settings.php
-chown $NEW_OWNER $MULTISITE_DIR/settings.php
 
 exit 0
